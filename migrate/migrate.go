@@ -1,8 +1,8 @@
 package main
 
 import (
-	"jamie404notfound/go-backend-crud/initializers"
-	"jamie404notfound/go-backend-crud/initializers/models"
+	"jamie404notfound/go-backend/initializers"
+	"jamie404notfound/go-backend/models"
 )
 
 func init() {

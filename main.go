@@ -1,7 +1,7 @@
 package main
 
 import (
-	"jamie404notfound/go-backend-crud/initializers"
+	"jamie404notfound/go-backend/initializers"
 
 	"github.com/gin-gonic/gin"
 )
