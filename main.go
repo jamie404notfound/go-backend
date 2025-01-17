@@ -1,6 +1,7 @@
 package main
 
 import (
+	"jamie404notfound/go-backend/controllers"
 	"jamie404notfound/go-backend/initializers"
 
 	"github.com/gin-gonic/gin"
@@ -13,10 +14,9 @@ func init() {
 
 func main() {
 	r := gin.Default()
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(200, gin.H{
-			"message": "pong",
-		})
-	})
+
+	// r.GET("/", controllers.UserCreate)
+	r.POST("/createUser", controllers.UserCreate)
+
 	r.Run() // listen and serve on 0.0.0.0:3000
 }
