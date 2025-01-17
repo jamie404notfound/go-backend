@@ -15,7 +15,7 @@ func init() {
 func main() {
 	r := gin.Default()
 
-	// r.GET("/", controllers.UserCreate)
+	r.GET("/getUsers", controllers.GetUsers)
 	r.POST("/createUser", controllers.UserCreate)
 
 	r.Run() // listen and serve on 0.0.0.0:3000

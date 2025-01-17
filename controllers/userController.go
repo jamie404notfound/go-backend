@@ -29,3 +29,12 @@ func UserCreate(c *gin.Context) {
 		"user": user,
 	})
 }
+
+func GetUsers(c *gin.Context) {
+	var users []models.User
+	initializers.DB.Find(&users)
+
+	c.JSON(200, gin.H{
+		"user": users,
+	})
+}
