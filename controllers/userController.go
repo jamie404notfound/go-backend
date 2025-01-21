@@ -3,16 +3,26 @@ package controllers
 import (
 	"jamie404notfound/go-backend/initializers"
 	"jamie404notfound/go-backend/models"
+	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"golang.org/x/crypto/bcrypt"
+	"gorm.io/gorm"
 )
 
+type LoginInput struct {
+	Username string `json:"username"`
+	Password string `json:"password"`
+}
+
+type Body struct {
+	Username string
+	Password string
+	Secret   string
+}
+
 func UserCreate(c *gin.Context) {
-	var body struct {
-		Username string
-		Password string
-		Secret   string
-	}
+	var body Body
 
 	c.Bind(&body)
 
@@ -40,35 +50,37 @@ func GetUsers(c *gin.Context) {
 }
 
 func LoginCheck(c *gin.Context) {
-	var input struct {
-		Username string `json:"username"`
-		Password string `json:"password"`
-	}
-
-	// Bind JSON body to the 'input' struct
-	if err := c.BindJSON(&input); err != nil {
-		c.JSON(400, gin.H{"error": "Invalid input"})
+	// Bind and validate JSON input
+	var input LoginInput
+	if err := c.ShouldBindJSON(&input); err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return
 	}
 
-	// Initialize a user model and query the database
+	// Query the database for the user
 	var user models.User
-	result := initializers.DB.Where("username = ? AND password = ?", input.Username, input.Password).First(&user)
+	err := initializers.DB.Where("username = ?", input.Username).First(&user).Error
 
-	// Check if the user was found
-	if result.Error != nil {
-		c.JSON(404, gin.H{"error": "User not found"})
+	// Handle errors and user not found
+	if err != nil {
+		if err == gorm.ErrRecordNotFound {
+			c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
+			return
+		}
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Database error"})
 		return
 	}
 
-	// Optionally, validate the password here
-	if input.Password != user.Password {
-		c.JSON(401, gin.H{"error": "Invalid password"})
+	// Compare hashed passwords
+	if err := bcrypt.CompareHashAndPassword([]byte(user.Password), []byte(input.Password)); err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Invalid username or password"})
 		return
 	}
 
-	// Respond with the user details (not including password or secret if not needed)
-	c.JSON(200, gin.H{
-		"user": user.Username,
+	// Respond with sanitized user details
+	c.JSON(http.StatusOK, gin.H{
+		"user": gin.H{
+			"username": user.Username,
+		},
 	})
 }
