@@ -7,7 +7,7 @@
 *.dll
 *.so
 *.dylib
-go-backend
+tmp
 
 # Test binary, built with `go test -c`
 *.test
