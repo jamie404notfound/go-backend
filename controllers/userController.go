@@ -10,48 +10,59 @@ import (
 	"gorm.io/gorm"
 )
 
-type LoginInput struct {
-	Username string `json:"username"`
-	Password string `json:"password"`
-}
-
-type Body struct {
-	Username string
-	Password string
-	Secret   string
-}
-
 func UserCreate(c *gin.Context) {
-	var body Body
+	var body models.Body
 
-	c.Bind(&body)
-
-	user := models.User{Username: body.Username, Password: body.Password, Secret: body.Secret}
-
-	result := initializers.DB.Create(&user)
-
-	if result.Error != nil {
-		c.Status(400)
+	// Bind the incoming JSON body to 'body'
+	if err := c.Bind(&body); err != nil {
+		c.JSON(400, gin.H{"error": "Invalid input"})
 		return
 	}
 
+	// Hash the password using bcrypt
+	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(body.Password), bcrypt.DefaultCost)
+	if err != nil {
+		c.JSON(500, gin.H{"error": "Failed to hash password"})
+		return
+	}
+
+	// Create the user with the hashed password
+	user := models.User{
+		Username: body.Username,
+		Password: string(hashedPassword), // Store the hashed password
+		Secret:   body.Secret,
+	}
+
+	// Save the user to the database
+	result := initializers.DB.Create(&user)
+
+	// Check for database errors
+	if result.Error != nil {
+		c.Status(400) // Bad request
+		return
+	}
+
+	// Respond with the created user (excluding password for security reasons)
 	c.JSON(200, gin.H{
-		"user": user,
+		"user": gin.H{
+			"username": user.Username,
+			"secret":   user.Secret, // You can return other user details if needed
+		},
 	})
 }
 
 func GetUsers(c *gin.Context) {
-	var users []models.User
+	var users models.Users
 	initializers.DB.Find(&users)
 
 	c.JSON(200, gin.H{
-		"user": users,
+		"user": users.Username,
 	})
 }
 
 func LoginCheck(c *gin.Context) {
 	// Bind and validate JSON input
-	var input LoginInput
+	var input models.LoginInput
 	if err := c.ShouldBindJSON(&input); err != nil {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid input"})
 		return

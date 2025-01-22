@@ -27,6 +27,7 @@ func main() {
 	r.GET("/getUsers", controllers.GetUsers)
 	r.POST("/login", controllers.LoginCheck)
 	r.POST("/createUser", controllers.UserCreate)
+	r.DELETE("/deleteUser", controllers.LoginCheck)
 
 	r.Run() // listen and serve on 0.0.0.0:3000
 }
